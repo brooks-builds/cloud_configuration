@@ -1,4 +1,4 @@
-import { getRegion } from "@pulumi/aws";
+import { getRegion, getAvailabilityZones } from "@pulumi/aws";
 import { Subnet, Vpc } from "@pulumi/aws/ec2";
 import { getProject, getStack } from "@pulumi/pulumi";
 
@@ -19,7 +19,8 @@ export async function createVpc(): Promise<Vpc> {
   });
 }
 
-export async function createSubnet(name: string, vpc: Vpc, cidrBlock: string): Promise<Subnet> {
-  name = `${name} - ${getProject()}:${getStack()}:${(await getRegion()).name}`;
-  return new Subnet(name, {cidrBlock, vpcId: vpc.id});
+export async function createSubnet(name: string, vpc: Vpc, cidrBlock: string, mapPublicIpOnLaunch: boolean): Promise<Subnet> {
+  const pulumiName = `${name} - ${getProject()}:${getStack()}:${(await getRegion()).name}`;
+  const availabilityZones = await getAvailabilityZones();
+  return new Subnet(pulumiName, {cidrBlock, vpcId: vpc.id, availabilityZone: availabilityZones.names[0], mapPublicIpOnLaunch, tags: {Name: name}});
 }
