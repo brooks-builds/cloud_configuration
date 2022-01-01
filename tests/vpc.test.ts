@@ -2,8 +2,9 @@
 import * as pulumi from "@pulumi/pulumi";
 import { describe, test, expect } from "@jest/globals";
 import { getPulumiOutputs } from "bb-pulumihelpers";
-import { createVpc } from "../index";
 import { MockMonitor, MockResourceArgs } from "@pulumi/pulumi/runtime/mocks";
+import { createVpc, createSubnet } from "../index";
+import { Subnet } from "@pulumi/aws/ec2";
 
 const project = "Brooks Builds";
 const stack = "test";
@@ -83,6 +84,21 @@ describe("AWS Cloud setup", function () {
       const [tags] = await getPulumiOutputs([vpc.tags]);
       expect(tags).toHaveProperty("Name");
       expect(tags.Name).toBe(stack);
+    });
+  });
+
+  describe("public subnet", () => {
+    let subnet: null | Subnet;
+    let urn: string;
+
+    beforeAll(async () => {
+      const vpc = await createVpc();
+      subnet = await createSubnet("public subnet", vpc, "10.0.1.0/24");
+      [urn] = await getPulumiOutputs([subnet.urn]);
+    });
+
+    test("has a good urn", async () => {
+      expect(urn).toContain(`public subnet - ${project}:${stack}:${region}`);
     });
   });
 });
