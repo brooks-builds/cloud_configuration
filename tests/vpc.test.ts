@@ -47,25 +47,40 @@ const mockMonitor = new MockMonitor({
 pulumi.runtime.setMockOptions(mockMonitor, project, stack, false);
 
 describe("AWS Cloud setup", function () {
-        test("vpc must be configured correctly", async () => {
-            const vpc = await createVpc();
-            const [
-                urn,
-                cidrBlock,
-                enableDnsHostnames,
-                tags
-            ] = await getPulumiOutputs([
-                vpc.urn,
-                vpc.cidrBlock,
-                vpc.enableDnsHostnames,
-                vpc.tags
-            ]);
-            console.log(urn);
-            console.log(`${project} - ${stack} - ${region}`);
-            expect(urn).toContain(`${project} - ${stack} - ${region}`);
-            expect(cidrBlock).toBe("10.0.0.0/16");
-            expect(enableDnsHostnames).toBe(true);
-            expect(tags).toHaveProperty("Name");
-            expect(tags.Name).toBe(stack);
-        });
+    describe("vpc", () => {
+        [
+            {
+                expected: `${project} - ${stack} - ${region}`,
+                chain: "toContain",
+                property: "urn"
+            }
+        ].forEach(async ({expected, chain, property}) => {
+            test(`expecting vpc ${property} ${chain} ${expected}`, async () => {
+                const vpc = await createVpc()
+                const [output] = await getPulumiOutputs([vpc[property]]);
+                expect(output)[chain](expected);
+            })
+        })
+    });
+        // test("vpc must be configured correctly", async () => {
+        //     const vpc = await createVpc();
+        //     const [
+        //         urn,
+        //         cidrBlock,
+        //         enableDnsHostnames,
+        //         tags
+        //     ] = await getPulumiOutputs([
+        //         vpc.urn,
+        //         vpc.cidrBlock,
+        //         vpc.enableDnsHostnames,
+        //         vpc.tags
+        //     ]);
+        //     console.log(urn);
+        //     console.log(`${project} - ${stack} - ${region}`);
+        //     expect(urn).toContain(`${project} - ${stack} - ${region}`);
+        //     expect(cidrBlock).toBe("10.0.0.0/16");
+        //     expect(enableDnsHostnames).toBe(true);
+        //     expect(tags).toHaveProperty("Name");
+        //     expect(tags.Name).toBe(stack);
+        // });
 });
