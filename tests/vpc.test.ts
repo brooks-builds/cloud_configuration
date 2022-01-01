@@ -1,35 +1,54 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as pulumi from "@pulumi/pulumi";
+import {describe, test, expect} from "@jest/globals"
+import {getPulumiOutputs} from "bb_pulumi_helpers";
+import {createVpc} from "../index";
+import { MockMonitor, MockResourceArgs } from "@pulumi/pulumi/runtime/mocks";
 
-JS_EXT_TO_TREAT_AS_ESM.
+const project = "Brooks Builds"
+const stack = "test"
+const region = "us-east-1";
 
-pulumi.runtime.setMocks({
-    newResource: function (args: pulumi.runtime.MockResourceArgs): { id: string, state: any } {
-        return {
-            id: args.inputs.name + "_id",
-            state: {
-                ...args.inputs,
-            },
-        };
+const mockMonitor = new MockMonitor({
+    call(args: pulumi.runtime.MockCallArgs): Record<string, any> {
+        switch (args.token) {
+            case "aws:index/getRegion:getRegion":
+                return {name: region};
+            default:
+                console.log("unknown call", args);
+                return args
+        }
     },
-    call: function (args: pulumi.runtime.MockCallArgs) {
-        return args;
-    },
-});
 
-describe("AWS VPC", function () {
-    let infra: typeof import("../index");
+    newResource(args: MockResourceArgs): { id: string, state: any } {
+        switch (args.type) {
+            case "aws:ec2/vpc:Vpc":
+                return {
+                    id: "5",
+                    state: {
+                        ...args
+                    }
+                }
+                default: {
+                    console.log("new resource", args);
+                    return {
+                        id: args.inputs.name + "_id",
+                        state: {
+                            ...args.inputs,
+                        }
+                    }
+                }
+        }
+    }
+})
+pulumi.runtime.setMockOptions(mockMonitor, project, stack, true);
 
-    beforeAll(async function () {
-        // It's important to import the program _after_ the mocks are defined.
-        infra = await import("../index");
-    });
-
-    describe("#server", function () {
-        // check 1: Instances have a Name tag.
-        it("must have a name tag", function (done) {
-            pulumi.all([infra.vpc.id]).apply(([id]) => {
-                done(expect(id).toBe("sg-12345678"))
-            });
+describe("AWS Cloud setup", function () {
+    describe("vpc", function () {
+        test("must have a pulumi name that includes the region", async () => {
+            const vpc = await createVpc();
+            const [urn] = await getPulumiOutputs([vpc.urn]);
+            expect(urn).toContain(`${project} - ${stack} - ${region}`);
         });
     });
 });
