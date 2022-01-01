@@ -6,5 +6,15 @@ export async function createVpc(): Promise<Vpc> {
     const project = getProject();
     const region = await getRegion();
     const stack = getStack();
-    return new Vpc(`${project} - ${stack} - ${region.name}`);
+    const cidrBlock = "10.0.0.0/16";
+    const enableDnsHostnames = true;
+    const tags = {
+        Name: `${project} - ${stack}`
+    }
+
+    return new Vpc(`${project} - ${stack} - ${region.name}`, {
+        cidrBlock,
+        enableDnsHostnames,
+        tags
+    });
 }

@@ -17,7 +17,7 @@
     "@pulumi/aws": "^4.0.0",
     "@pulumi/awsx": "^0.30.0",
     "@pulumi/pulumi": "^3.0.0",
-    "bb_pulumi_helpers": "file:../../mine/pulumi-helpers-js"
+    "bb-pulumihelpers": "^1.0.0"
   },
   "scripts": {
     "test": "jest"
