@@ -9,7 +9,7 @@ export async function createVpc(): Promise<Vpc> {
     const cidrBlock = "10.0.0.0/16";
     const enableDnsHostnames = true;
     const tags = {
-        Name: `${project} - ${stack}`
+        Name: stack
     }
 
     return new Vpc(`${project} - ${stack} - ${region.name}`, {

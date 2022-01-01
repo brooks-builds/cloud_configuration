@@ -8,7 +8,7 @@ import { MockMonitor, MockResourceArgs } from "@pulumi/pulumi/runtime/mocks";
 const project = "Brooks Builds"
 const stack = "test"
 const region = "us-east-1";
-const timeOutInSeconds = 60;
+const timeOutInSeconds = 22;
 
 jest.setTimeout(timeOutInSeconds * 1000);
 
@@ -47,17 +47,25 @@ const mockMonitor = new MockMonitor({
 pulumi.runtime.setMockOptions(mockMonitor, project, stack, false);
 
 describe("AWS Cloud setup", function () {
-    describe("vpc", function () {
-        test("must have a pulumi name that includes the region", async () => {
+        test("vpc must be configured correctly", async () => {
             const vpc = await createVpc();
-            const [urn] = await getPulumiOutputs([vpc.urn]);
+            const [
+                urn,
+                cidrBlock,
+                enableDnsHostnames,
+                tags
+            ] = await getPulumiOutputs([
+                vpc.urn,
+                vpc.cidrBlock,
+                vpc.enableDnsHostnames,
+                vpc.tags
+            ]);
+            console.log(urn);
+            console.log(`${project} - ${stack} - ${region}`);
             expect(urn).toContain(`${project} - ${stack} - ${region}`);
-        });
-
-        test("must have a cidr block defined", async () => {
-            const vpc = await createVpc();
-            const [cidrBlock] = await getPulumiOutputs([vpc.cidrBlock]);
             expect(cidrBlock).toBe("10.0.0.0/16");
-        })
-    });
+            expect(enableDnsHostnames).toBe(true);
+            expect(tags).toHaveProperty("Name");
+            expect(tags.Name).toBe(stack);
+        });
 });
