@@ -1,8 +1,19 @@
-import * as aws from "@pulumi/aws";
+import { Vpc } from "@pulumi/aws/ec2";
+import pulumiHelpers from "bb-pulumi-helpers-ts";
 
-export const vpc = new aws.ec2.Vpc("meow", {
-    cidrBlock: "10.0.0.0/16",
-    tags: {
-        Name: "arsietarist"
-    }
-})
+const {aws} = pulumiHelpers;
+const {createVpc} = aws;
+
+export interface ICloudConfiguration {
+  vpc: Vpc
+}
+
+async function main(): Promise<ICloudConfiguration> {
+  const vpc = await createVpc();
+
+  return {
+    vpc
+  }
+}
+
+export default main;

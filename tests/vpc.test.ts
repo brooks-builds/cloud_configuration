@@ -1,35 +1,35 @@
 import * as pulumi from "@pulumi/pulumi";
-
-JS_EXT_TO_TREAT_AS_ESM.
+import { MockCallArgs, MockResourceArgs } from "@pulumi/pulumi/runtime";
+import { convertPulumiOutputs } from "bb-pulumi-helpers-ts/utilities";
+import createdCloud from "../index";
 
 pulumi.runtime.setMocks({
-    newResource: function (args: pulumi.runtime.MockResourceArgs): { id: string, state: any } {
+    newResource(args: MockResourceArgs): {id: string, state: any} {
         return {
-            id: args.inputs.name + "_id",
-            state: {
-                ...args.inputs,
-            },
-        };
+            id: `${args.name}_id`,
+            state: {...args.inputs}
+        }
     },
-    call: function (args: pulumi.runtime.MockCallArgs) {
-        return args;
-    },
-});
+    call(args: MockCallArgs): any {
+        switch (args.token) {
+            default:
+                console.log("Not handling call for ", args.token);
+                return {...args.inputs}
+        }
+    }
+}, "Brooks Builds Testing", "Testing");
 
-describe("AWS VPC", function () {
-    let infra: typeof import("../index");
+describe("Brooks Builds Cloud Configuration", () => {
+    let vpcCidr: string;
 
-    beforeAll(async function () {
-        // It's important to import the program _after_ the mocks are defined.
-        infra = await import("../index");
-    });
+    beforeAll(async () => {
+        const {vpc} = await createdCloud();
 
-    describe("#server", function () {
-        // check 1: Instances have a Name tag.
-        it("must have a name tag", function (done) {
-            pulumi.all([infra.vpc.id]).apply(([id]) => {
-                done(expect(id).toBe("sg-12345678"))
-            });
-        });
-    });
-});
+        [vpcCidr] = await convertPulumiOutputs([vpc.cidrBlock]);
+    })
+    test("main vpc has the correct cidr block", async () => {
+        expect(vpcCidr).toBe("10.0.0.0/16");
+    })
+})
+
+export const name = "testing"
