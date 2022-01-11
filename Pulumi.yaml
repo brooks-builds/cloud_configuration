@@ -1,3 +1,3 @@
-name: brooks_builds_cloud_configuration
+name: brooks-builds
 runtime: nodejs
-description: Configuring the cloud for Brooks Builds
+description: Cloud configuration for Brooks Builds
